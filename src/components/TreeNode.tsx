@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ExpandToggleButton from "./ExpandToggleButton";
 import Tag from "./Tag";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 enum ClassName {
   db = "db",
   table = "table",
@@ -110,7 +111,7 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
           // Dividing by 2 b/c for each level we add 2.
           // Adding 1 to make level 1-based.
           aria-level={indent / 2 + 1}
-          className={`border border-red-600 font-bold flex gap-2 tree-node`}
+          className={`font-bold flex gap-2 items-center p-1 tree-node`}
           style={{ color, marginLeft: `${indent}rem` }}
           tabIndex={0} // set tabindex to some value to make element focusable
           onKeyDown={handleKeyDown}

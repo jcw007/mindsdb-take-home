@@ -6,44 +6,42 @@ export type TreeViewProps = {
 };
 
 const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
-  const focusedTreeNode = useRef<HTMLLIElement>(null);
+  const focusedTreeNode = useRef<HTMLLIElement | null>(null);
 
-  useEffect(() => {
-    const handleKeyDown = document.addEventListener(
-      "keydown",
-      (e: KeyboardEvent) => {
-        // Only handle arrow up & down key event
-        if (["ArrowUp", "ArrowDown"].includes(e.key)) {
-          if (!focusedTreeNode?.current) {
-            const el = document.querySelector(".tree-node") as HTMLElement;
+  const handleKeyDown = (e: KeyboardEvent) => {
+    // Only handle arrow up & down key event
+    if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+      if (!focusedTreeNode?.current) {
+        const el = document.querySelector(".tree-node") as HTMLLIElement;
 
-            if (el) {
-              focusedTreeNode.current = el;
-              el.focus();
-            }
-          } else {
-            const currentEl = focusedTreeNode.current;
-            let nextEl: HTMLElement;
+        if (el) {
+          focusedTreeNode.current = el;
+          el.focus();
+        }
+      } else {
+        const currentEl = focusedTreeNode.current;
+        let nextEl: HTMLLIElement;
 
-            if (e.key === "ArrowDown") {
-              // arrow down key
-              nextEl = focusedTreeNode.current
-                .nextElementSibling as HTMLElement;
-            } else {
-              // arrow up key
-              nextEl = focusedTreeNode.current
-                .previousElementSibling as HTMLElement;
-            }
+        if (e.key === "ArrowDown") {
+          // arrow down key
+          nextEl = focusedTreeNode.current.nextElementSibling as HTMLLIElement;
+        } else {
+          // arrow up key
+          nextEl = focusedTreeNode.current
+            .previousElementSibling as HTMLLIElement;
+        }
 
-            if (nextEl) {
-              currentEl.blur();
-              nextEl.focus();
-              focusedTreeNode.current = nextEl;
-            }
-          }
+        if (nextEl) {
+          currentEl.blur();
+          nextEl.focus();
+          focusedTreeNode.current = nextEl;
         }
       }
-    );
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);

@@ -1,157 +1,71 @@
-import {
-  ChevronRight,
-  Database,
-  Brain,
-  View,
-  Bot,
-  FolderTree,
-} from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-
-enum ClassName {
-  db = "db",
-  table = "table",
-}
-
-enum TypeName {
-  system = "system",
-  project = "project",
-  model = "model",
-  view = "view",
-  agent = "agent",
-  data = "data",
-}
-
-export type TreeNode = {
-  name: string;
-  // className: ClassName;
-  ["class"]: ClassName;
-  deletable: boolean;
-  type?: TypeName;
-  schema?: string;
-  engine?: string;
-  visible?: boolean;
-  children?: TreeNode[];
-};
+import React, { useCallback, useEffect, useRef } from "react";
+import TreeNode, { type TreeNodeType } from "./TreeNode";
 
 export type TreeViewProps = {
-  data: TreeNode[];
+  data: TreeNodeType[];
 };
 
-export type TreeNodeProps = {
-  indent?: number;
-  data: TreeNode;
-};
-
-const NodeUIConfig = {
-  [TypeName.system]: { icon: <Database />, color: "gray" },
-  [TypeName.project]: { icon: <Database />, color: "blue" },
-  [TypeName.model]: { icon: <Brain />, color: "purple" },
-  [TypeName.view]: { icon: <View />, color: "green" },
-  [TypeName.agent]: { icon: <Bot />, color: "orange" },
-  [TypeName.data]: { icon: <FolderTree />, color: "navy" },
-};
-
-const Tag: React.FC<{ color?: string; label: string }> = ({
-  color = "gray",
-  label,
-}) => {
-  return (
-    <div className="text-sm rounded bg-gray-100 py-1 px-2" style={{ color }}>
-      {label}
-    </div>
-  );
-};
-
-function ExpandToggleButton({
-  expanded,
-  onClick,
-}: {
-  expanded: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`transform transition-transform duration-200 ${
-        expanded ? "rotate-90" : ""
-      }`}
-      onClick={onClick}
-    >
-      <ChevronRight />
-    </button>
-  );
-}
-
-const TreeNode: React.FC<TreeNodeProps> = ({ indent = 0, data }) => {
-  const [expanded, setExpanded] = useState<boolean>(false);
-  const {
-    name,
-    // class,
-    // deletable,
-    children,
-    engine,
-    // schema,
-    type,
-    // visible,
-  } = data;
-  // const { name, type, children, ...rest } = data;
-  const { color = "brown", icon = <FolderTree /> } =
-    NodeUIConfig[type as TypeName] || {};
-
-  const divRef = useRef<HTMLDivElement>(null);
+const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
+  const focusedTreeNode = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const div = divRef.current;
+    const handleKeyDown = document.addEventListener(
+      "keydown",
+      (e: KeyboardEvent) => {
+        // Only handle arrow up & down key event
+        if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+          if (!focusedTreeNode?.current) {
+            const el = document.querySelector(".tree-node") as HTMLElement;
 
-    setTimeout(() => {
-      div?.classList.add("expanded");
-    });
+            if (el) {
+              focusedTreeNode.current = el;
+              el.focus();
+            }
+          } else {
+            const currentEl = focusedTreeNode.current;
+            let nextEl: HTMLElement;
+
+            if (e.key === "ArrowDown") {
+              // arrow down key
+              nextEl = focusedTreeNode.current
+                .nextElementSibling as HTMLElement;
+            } else {
+              // arrow up key
+              nextEl = focusedTreeNode.current
+                .previousElementSibling as HTMLElement;
+            }
+
+            if (nextEl) {
+              currentEl.blur();
+              nextEl.focus();
+              focusedTreeNode.current = nextEl;
+            }
+          }
+        }
+      }
+    );
 
     return () => {
-      div?.classList.remove("expanded");
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
-  return (
-    <>
-      <div
-        ref={divRef}
-        className={`border border-red-600 font-bold flex gap-2 node`}
-        style={{ color, marginLeft: `${indent}rem` }}
-      >
-        <div>{icon}</div>
-        <div>{name}</div>
-        {/* expand/collapse button */}
-        {!!children && !!children.length && (
-          <div>
-            <ExpandToggleButton
-              expanded={expanded}
-              onClick={() => setExpanded(!expanded)}
-            />
-          </div>
-        )}
-        <Tag label={type || TypeName.system} />
-        {engine && <Tag color="blue" label={engine} />}
-      </div>
-      {expanded && !!children && !!children.length && (
-        <>
-          {children.map((child) => (
-            <TreeNode key={child.name} data={child} indent={indent + 2} />
-          ))}
-        </>
-      )}
-    </>
-  );
-};
+  const handleTreeNodeFocus = useCallback((focusedElement: HTMLElement) => {
+    focusedTreeNode.current = focusedElement;
+  }, []);
 
-const TreeView: React.FC<TreeViewProps> = ({ data }) => {
   return (
-    <div className="flex flex-col gap-2">
-      {data.map((node) => (
-        <TreeNode key={node.name} data={node} />
+    <div className="flex flex-col gap-2 items-start">
+      {data.map((node, index) => (
+        <TreeNode
+          key={node.name}
+          tabIndex={index}
+          data={node}
+          onFocus={handleTreeNodeFocus}
+        />
       ))}
     </div>
   );
-};
+});
 
 export default TreeView;

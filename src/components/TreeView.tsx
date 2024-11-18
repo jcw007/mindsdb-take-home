@@ -6,7 +6,7 @@ export type TreeViewProps = {
 };
 
 const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
-  const focusedTreeNode = useRef<HTMLDivElement>(null);
+  const focusedTreeNode = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
     const handleKeyDown = document.addEventListener(
@@ -50,21 +50,20 @@ const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
     };
   }, []);
 
-  const handleTreeNodeFocus = useCallback((focusedElement: HTMLElement) => {
+  const handleTreeNodeFocus = useCallback((focusedElement: HTMLLIElement) => {
     focusedTreeNode.current = focusedElement;
   }, []);
 
   return (
-    <div className="flex flex-col gap-2 items-start">
-      {data.map((node, index) => (
-        <TreeNode
-          key={node.name}
-          tabIndex={index}
-          data={node}
-          onFocus={handleTreeNodeFocus}
-        />
+    <ul
+      role="tree"
+      aria-label="Tree View"
+      className="flex flex-col gap-2 items-start"
+    >
+      {data.map((node) => (
+        <TreeNode key={node.name} data={node} onFocus={handleTreeNodeFocus} />
       ))}
-    </div>
+    </ul>
   );
 });
 

@@ -31,10 +31,9 @@ export type TreeNodeType = {
 };
 
 export type TreeNodeProps = {
-  tabIndex: number;
   indent?: number;
   data: TreeNodeType;
-  onFocus?: (focusedElement: HTMLElement) => void;
+  onFocus?: (focusedElement: HTMLLIElement) => void;
 };
 
 const NodeUIConfig = {
@@ -47,7 +46,7 @@ const NodeUIConfig = {
 };
 
 const TreeNode: React.FC<TreeNodeProps> = React.memo(
-  ({ indent = 0, tabIndex, data, onFocus = () => {} }) => {
+  ({ indent = 0, data, onFocus = () => {} }) => {
     const {
       name,
       // class,
@@ -62,7 +61,7 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
     const { color = "brown", icon = <FolderTree /> } =
       (type && NodeUIConfig[type]) || {};
     const [expanded, setExpanded] = useState<boolean>(false);
-    const treeNodeRef = useRef<HTMLDivElement>(null);
+    const treeNodeRef = useRef<HTMLLIElement>(null);
 
     useEffect(() => {
       const div = treeNodeRef.current;
@@ -102,11 +101,18 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
 
     return (
       <>
-        <div
+        <li
           ref={treeNodeRef}
+          role="treenode"
+          aria-expanded={expanded}
+          aria-label={name}
+          // Use indent value to calculate level.
+          // Dividing by 2 b/c for each level we add 2.
+          // Adding 1 to make level 1-based.
+          aria-level={indent / 2 + 1}
           className={`border border-red-600 font-bold flex gap-2 tree-node`}
           style={{ color, marginLeft: `${indent}rem` }}
-          tabIndex={tabIndex}
+          tabIndex={0} // set tabindex to some value to make element focusable
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
         >
@@ -125,13 +131,12 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
           <div>{name}</div>
           <Tag label={type || TypeName.system} />
           {engine && <Tag color="blue" label={engine} />}
-        </div>
+        </li>
         {expanded && !!children && !!children.length && (
           <>
-            {children.map((child, index) => (
+            {children.map((child) => (
               <TreeNode
                 key={child.name}
-                tabIndex={tabIndex + index}
                 data={child}
                 indent={indent + 2}
                 onFocus={onFocus}

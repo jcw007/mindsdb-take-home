@@ -17,7 +17,7 @@ const useTreeViewData = () => {
 
       setTimeout(() => {
         resolve(Array.isArray(array) ? array : []);
-      }, 3000); // fake a 3s delay
+      }, 1000); // fake a 1s delay
     });
   };
 

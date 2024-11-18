@@ -1,4 +1,5 @@
-import TreeView, { TreeNode } from "./components/TreeView";
+import TreeView from "./components/TreeView";
+import { TreeNodeType } from "./components/TreeNode";
 
 import "./App.css";
 
@@ -12,7 +13,7 @@ function App() {
 
 export default App;
 
-const data: TreeNode[] = [
+const data: TreeNodeType[] = [
   {
     name: "information_schema",
     class: "db",

@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import TreeNode, { type TreeNodeType } from "./TreeNode";
+import { TreeViewUIContextProvider } from "../contexts/TreeViewUIContext";
+import TreeViewUIConfig from "./TreeViewUIConfig";
 
 export type TreeViewProps = {
   data: TreeNodeType[];
 };
 
-const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
+const TreeViewInner: React.FC<TreeViewProps> = React.memo(({ data }) => {
   const focusedTreeNode = useRef<HTMLLIElement | null>(null);
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -71,5 +73,14 @@ const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
     </ul>
   );
 });
+
+const TreeView: React.FC<TreeViewProps> = ({ data }) => {
+  return (
+    <TreeViewUIContextProvider>
+      <TreeViewUIConfig />
+      <TreeViewInner data={data} />
+    </TreeViewUIContextProvider>
+  );
+};
 
 export default TreeView;

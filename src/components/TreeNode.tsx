@@ -1,32 +1,10 @@
-import {
-  Database,
-  Brain,
-  View,
-  Bot,
-  FolderTree,
-  LoaderCircle,
-} from "lucide-react";
+import { FolderTree, LoaderCircle } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ExpandToggleButton from "./ExpandToggleButton";
 import Tag from "./Tag";
 import useTreeViewData from "../hooks/useTreeViewData";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-enum ClassName {
-  db = "db",
-  table = "table",
-  schema = "schema",
-}
-
-enum TypeName {
-  system = "system",
-  project = "project",
-  model = "model",
-  view = "view",
-  agent = "agent",
-  data = "data",
-  table = "table",
-}
+import { TypeName, ClassName } from "../constants";
+import { useTreeViewUIContext } from "../hooks/useTreeViewUIContext";
 
 export type TreeNodeType = {
   name: string;
@@ -47,17 +25,9 @@ export type TreeNodeProps = {
   onFocus?: (focusedElement: HTMLLIElement) => void;
 };
 
-const NodeUIConfig = {
-  [TypeName.system]: { icon: <Database />, color: "gray" },
-  [TypeName.project]: { icon: <Database />, color: "blue" },
-  [TypeName.model]: { icon: <Brain />, color: "purple" },
-  [TypeName.view]: { icon: <View />, color: "green" },
-  [TypeName.agent]: { icon: <Bot />, color: "orange" },
-  [TypeName.data]: { icon: <FolderTree />, color: "navy" },
-};
-
 const TreeNode: React.FC<TreeNodeProps> = React.memo(
   ({ path, indent = 0, data, onFocus = () => {} }) => {
+    const { value: NodeUIConfig } = useTreeViewUIContext();
     const {
       name,
       // class,

@@ -1,8 +1,12 @@
-.node {
+.tree-node {
   max-height: 0;
   transition: max-height 0.5s ease-in-out;
 }
 
-.node.expanded {
+.tree-node.expanded {
   max-height: 100vh;
+}
+
+.tree-node:focus {
+  background-color: #d1d1d1;
 }

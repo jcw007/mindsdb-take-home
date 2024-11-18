@@ -1,7 +1,15 @@
-import { Database, Brain, View, Bot, FolderTree } from "lucide-react";
+import {
+  Database,
+  Brain,
+  View,
+  Bot,
+  FolderTree,
+  LoaderCircle,
+} from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ExpandToggleButton from "./ExpandToggleButton";
 import Tag from "./Tag";
+import useTreeViewData from "../hooks/useTreeViewData";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 enum ClassName {
@@ -29,9 +37,11 @@ export type TreeNodeType = {
   engine?: string | null;
   visible?: boolean;
   children?: TreeNodeType[];
+  hasChildren?: boolean;
 };
 
 export type TreeNodeProps = {
+  path: string;
   indent?: number;
   data: TreeNodeType;
   onFocus?: (focusedElement: HTMLLIElement) => void;
@@ -47,12 +57,13 @@ const NodeUIConfig = {
 };
 
 const TreeNode: React.FC<TreeNodeProps> = React.memo(
-  ({ indent = 0, data, onFocus = () => {} }) => {
+  ({ path, indent = 0, data, onFocus = () => {} }) => {
     const {
       name,
       // class,
       // deletable,
-      children,
+      // children,
+      hasChildren,
       engine,
       // schema,
       type,
@@ -62,38 +73,69 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
     const { color = "brown", icon = <FolderTree /> } =
       (type && NodeUIConfig[type]) || {};
     const [expanded, setExpanded] = useState<boolean>(false);
+    const [childNodes, setChildNodes] = useState<TreeNodeType[]>([]);
+    const [childNodeLoading, setChildNodeLoading] = useState<boolean>(false);
     const treeNodeRef = useRef<HTMLLIElement>(null);
+    const { getChildNodes: getChildNodesFromAPI } = useTreeViewData();
 
+    // Animation for expanding
     useEffect(() => {
-      const div = treeNodeRef.current;
+      const el = treeNodeRef.current;
 
       setTimeout(() => {
-        div?.classList.add("expanded");
+        el?.classList.add("expanded");
       });
 
       return () => {
-        div?.classList.remove("expanded");
+        el?.classList.remove("expanded");
       };
     }, []);
 
+    const getChildNodes = useCallback(
+      async (path: string) => {
+        setChildNodeLoading(true);
+        setChildNodes(await getChildNodesFromAPI(path));
+        setChildNodeLoading(false);
+        // TODO: need to persist the loaded child nodes near the root
+        // so we don't hit the API again.
+      },
+      [getChildNodesFromAPI]
+    );
+
+    // Keydown handler to catch Enter key hits
     const handleKeyDown = useCallback(
-      (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && children?.length) {
+      async (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && hasChildren) {
+          if (!expanded && !childNodes.length) {
+            // if expanding and has not downloaded child nodes, get child nodes
+            await getChildNodes(path);
+          }
+
           setExpanded(!expanded);
         }
       },
-      [expanded, children]
+      [expanded, childNodes, path, getChildNodes, hasChildren]
     );
 
-    const handleToggleBtnClick = useCallback(() => {
-      setExpanded(!expanded);
-
+    // Children expand/collapse button click handler
+    const handleToggleBtnClick = useCallback(async () => {
       if (treeNodeRef.current) {
+        // Call focus on this element
         treeNodeRef.current.focus();
+        // Pass the focused element up to the root for saving
+        // in the TreeView component's ref
         onFocus(treeNodeRef.current);
       }
-    }, [expanded, onFocus]);
 
+      if (!expanded && !childNodes.length) {
+        // if expanding and has not downloaded child nodes, get child nodes
+        await getChildNodes(path);
+      }
+
+      setExpanded(!expanded);
+    }, [expanded, onFocus, path, getChildNodes, childNodes]);
+
+    // Element focus handler
     const handleFocus = useCallback(() => {
       if (treeNodeRef.current) {
         onFocus(treeNodeRef.current);
@@ -118,7 +160,7 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
           onFocus={handleFocus}
         >
           {/* expand/collapse button */}
-          {!!children && !!children.length ? (
+          {hasChildren ? (
             <div>
               <ExpandToggleButton
                 expanded={expanded}
@@ -130,16 +172,22 @@ const TreeNode: React.FC<TreeNodeProps> = React.memo(
           )}
           <div>{icon}</div>
           <div>{name}</div>
+          {/* tags */}
           <Tag label={type || TypeName.system} />
           {engine && <Tag color="blue" label={engine} />}
+          {/* child nodes spinning loading indicator */}
+          {hasChildren && childNodeLoading && (
+            <LoaderCircle size={16} className="animate-spin" />
+          )}
         </li>
-        {expanded && !!children && !!children.length && (
+        {expanded && hasChildren && !!childNodes.length && (
           <>
-            {children.map((child) => (
+            {childNodes.map((child, index) => (
               <TreeNode
                 key={child.name}
-                data={child}
+                path={path + ":" + index}
                 indent={indent + 2}
+                data={child}
                 onFocus={onFocus}
               />
             ))}

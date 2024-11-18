@@ -9,7 +9,9 @@ const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
   const focusedTreeNode = useRef<HTMLLIElement | null>(null);
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    // Only handle arrow up & down key event
+    // Used for keyboard navigation
+    // Only handles arrow up & down key event
+    // Saves focused element to ref and calling blur() on prev element
     if (["ArrowUp", "ArrowDown"].includes(e.key)) {
       if (!focusedTreeNode?.current) {
         const el = document.querySelector(".tree-node") as HTMLLIElement;
@@ -58,8 +60,13 @@ const TreeView: React.FC<TreeViewProps> = React.memo(({ data }) => {
       aria-label="Tree View"
       className="flex flex-col gap-2 items-start"
     >
-      {data.map((node) => (
-        <TreeNode key={node.name} data={node} onFocus={handleTreeNodeFocus} />
+      {data.map((node, index) => (
+        <TreeNode
+          key={node.name}
+          data={node}
+          path={`${index}`}
+          onFocus={handleTreeNodeFocus}
+        />
       ))}
     </ul>
   );
